@@ -33,12 +33,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
     List<Movie> mMovieList;
     ProgressBar progressBar;
 
-    public static final String EXTRA_TITLE = "title";
-    public static final String EXTRA_ORIGINAL_TITLE = "originalTitle";
-    public static final String EXTRA_RELEASE_DATE = "releaseDate";
-    public static final String EXTRA_VOTE = "vote";
-    public static final String EXTRA_OVERVIEW = "overview";
-    public static final String EXTRA_PATH = "path";
+    public static final String EXTRA_MOVIE = "movie";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,20 +70,10 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
-        super.onSaveInstanceState(outState, outPersistentState);
-    }
-
-    @Override
     public void onItemClick(View view, int position) {
         Movie movie = mMovieList.get(position);
         Intent intent = new Intent(this, DetailActivity.class);
-        intent.putExtra(EXTRA_TITLE, movie.getTitle());
-        intent.putExtra(EXTRA_ORIGINAL_TITLE, movie.getOriginalTitle());
-        intent.putExtra(EXTRA_RELEASE_DATE, movie.getReleaseDate());
-        intent.putExtra(EXTRA_VOTE, movie.getVoteAverage());
-        intent.putExtra(EXTRA_OVERVIEW, movie.getOverview());
-        intent.putExtra(EXTRA_PATH, movie.getPosterPath());
+        intent.putExtra(EXTRA_MOVIE, movie);
         startActivity(intent);
     }
 

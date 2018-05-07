@@ -27,12 +27,13 @@ public class DetailActivity extends AppCompatActivity {
         ImageView posterImage = findViewById(R.id.imageView_poster);
 
         Intent intent = getIntent();
-        titleTV.setText(intent.getStringExtra(MainActivity.EXTRA_TITLE));
-        originalTitleTV.setText(intent.getStringExtra(MainActivity.EXTRA_ORIGINAL_TITLE));
-        releaseDateTV.setText(intent.getStringExtra(MainActivity.EXTRA_RELEASE_DATE));
-        voteTV.setText(intent.getStringExtra(MainActivity.EXTRA_VOTE));
-        overviewTV.setText(intent.getStringExtra(MainActivity.EXTRA_OVERVIEW));
-        Picasso.get().load(NetworkUtil.getFullImagePath(intent.getStringExtra(MainActivity.EXTRA_PATH))).into(posterImage);
+        Movie movie = intent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
+        titleTV.setText(movie.getTitle());
+        originalTitleTV.setText(movie.getOriginalTitle());
+        releaseDateTV.setText(movie.getReleaseDate());
+        voteTV.setText(movie.getVoteAverage());
+        overviewTV.setText(movie.getOverview());
+        Picasso.get().load(NetworkUtil.getFullImagePath(movie.getPosterPath())).into(posterImage);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
