@@ -1,10 +1,7 @@
 package com.louise.udacity.popularmovies;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,11 +12,19 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.Toast;
+
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements PostersAdapter.ItemClickListener,
-        AdapterView.OnItemSelectedListener, FetchMoviesTask.AsyncResponse{
+        AdapterView.OnItemSelectedListener{
     private final static String TAG = MainActivity.class.getSimpleName();
 
     PostersAdapter mAdapter;
@@ -58,8 +63,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         mAdapter = new PostersAdapter(this, this);
         mRecyclerView.setAdapter(mAdapter);
 
-        //execute the async task
-        new FetchMoviesTask(this, this, this).execute();
+        fetchMovies();
 
     }
 
@@ -76,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         editor.putString(DefaultSharedPreferenceConstants.SORT_BY, parent.getItemAtPosition(position).toString());
         editor.apply();
-        new FetchMoviesTask(this, this, this).execute();
+        fetchMovies();
     }
 
     @Override
@@ -84,55 +88,45 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
 
     }
 
-    @Override
-    public void processFinish(List<Movie> movieList) {
-        mMovieList = movieList;
-        mAdapter.swapData(movieList);
-        /*progressBar.setVisibility(View.INVISIBLE);*/
+    private void fetchMovies() {
+        progressBar.setVisibility(View.VISIBLE);
+
+        // Get sort by
+        String[] sortByArr = getResources().getStringArray(R.array.sort_by_array);
+        String sortByDefault = sortByArr[0];
+        String sortBy = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                .getString(DefaultSharedPreferenceConstants.SORT_BY,
+                        sortByDefault);
+
+        String APIType = NetworkUtil.POPULAR;
+        if(sortBy.equals(sortByArr[1]))
+            APIType = NetworkUtil.TOP_RATED;
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(NetworkUtil.buildURL(APIType, 0),
+                null,
+                new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        progressBar.setVisibility(View.INVISIBLE);
+                        try {
+                            mMovieList = NetworkUtil.getMovieList(response);
+                        } catch (JSONException e) {
+                            Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+                        }
+                        mAdapter.swapData(mMovieList);
+                    }
+                },
+                new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        progressBar.setVisibility(View.INVISIBLE);
+                        Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+                    }
+                });
+
+        // Access the RequestQueue through your singleton class.
+        MySingletonVolley.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
-
-    /*class FetchMoview extends AsyncTask<Void, Void, List<Movie>> {
-        Context context;
-
-        FetchMoview(Context context) {
-            this.context = context;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected List<Movie> doInBackground(Void... voids) {
-
-            List<Movie> movieList = null;
-            try {
-                String[] sortByArr = context.getResources().getStringArray(R.array.sort_by_array);
-                String sortByDefault = sortByArr[0];
-                String sortBy = PreferenceManager.getDefaultSharedPreferences(context)
-                        .getString(DefaultSharedPreferenceConstants.SORT_BY,
-                                sortByDefault);
-
-                String url = NetworkUtil.POPULAR_URL;
-                if (sortBy.equals(sortByArr[1]))
-                    url = NetworkUtil.TOP_RATED_URL;
-
-                movieList = NetworkUtil.fetchMovieList(url);
-            } catch (IOException e) {
-                Toast.makeText(context, "Network error!", Toast.LENGTH_LONG).show();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            Log.d(TAG, "movie count: " + movieList.size());
-            return movieList;
-        }
-
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            mMovieList = movies;
-            mAdapter.swapData(movies);
-            progressBar.setVisibility(View.INVISIBLE);
-        }
-    }*/
 }

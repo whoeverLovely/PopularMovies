@@ -21,7 +21,9 @@
         app:layout_constraintEnd_toStartOf="@+id/guideline"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Happy Together" />
+        tools:text="Happy Together"
+        android:layout_marginRight="@dimen/basic_margin"
+        android:layout_marginLeft="@dimen/bold_margin" />
 
     <TextView
         android:id="@+id/textView_original_title"
@@ -63,7 +65,8 @@
         app:layout_constraintStart_toEndOf="@id/guideline"
         app:layout_constraintTop_toTopOf="@+id/textView_title"
         app:layout_constraintVertical_bias="1.0"
-        app:srcCompat="@drawable/poster_sample" />
+        app:srcCompat="@drawable/poster_sample"
+        android:layout_marginRight="@dimen/bold_margin" />
 
     <TextView
         android:id="@+id/textView_overview"
@@ -75,7 +78,9 @@
         app:layout_constraintEnd_toEndOf="@+id/imageView_poster"
         app:layout_constraintStart_toStartOf="@+id/textView_title"
         app:layout_constraintTop_toBottomOf="@+id/imageView_poster"
-        tools:text="here is overview" />
+        tools:text="here is overview"
+        android:layout_marginRight="@dimen/basic_margin"
+        android:layout_marginLeft="0dp" />
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline"
@@ -83,6 +88,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         app:layout_constraintGuide_percent="0.6" />
+
+    <TextView
+        android:id="@+id/textView_trailer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/trailer"
+        app:layout_constraintTop_toBottomOf="@+id/textView_overview"
+        app:layout_constraintStart_toStartOf="@id/textView_overview"
+        />
 
 </android.support.constraint.ConstraintLayout>
 
