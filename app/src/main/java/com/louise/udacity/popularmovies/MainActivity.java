@@ -23,7 +23,7 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements PostersAdapter.ItemClickListener,
+public class MainActivity extends AppCompatActivity implements ItemClickListener,
         AdapterView.OnItemSelectedListener{
     private final static String TAG = MainActivity.class.getSimpleName();
 

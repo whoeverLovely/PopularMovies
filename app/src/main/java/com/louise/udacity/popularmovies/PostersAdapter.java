@@ -67,7 +67,4 @@ public class PostersAdapter extends RecyclerView.Adapter<PostersAdapter.ViewHold
         }
     }
 
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
-    }
 }

@@ -65,9 +65,20 @@ public class NetworkUtil {
             movie.setReleaseDate(movieJson.getString("release_date"));
             movie.setVoteAverage(movieJson.getString("vote_average"));
             movie.setTitle(movieJson.getString("title"));
+            movie.setId(movieJson.getInt("id"));
             movieList.add(movie);
         }
         return movieList;
+    }
+
+    public static List<String> getTrailerIds(JSONObject jsonObject) throws JSONException {
+        JSONArray videoArray = jsonObject.getJSONArray("results");
+        List<String> trailerList = new LinkedList<>();
+        for (int i = 0; i < videoArray.length(); i++) {
+            if ("Trailer".equals(videoArray.getJSONObject(i).getString("type")))
+                trailerList.add(videoArray.getJSONObject(i).getString("key"));
+        }
+        return trailerList;
     }
 
     public static String getFullImagePath(String path) {
