@@ -8,7 +8,7 @@
         android:id="@+id/poster_grid_item_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="@dimen/basic_margin"
         android:layout_gravity="center"
         android:contentDescription="poster_image"
         android:background="@color/colorPrimary"/>
@@ -17,9 +17,9 @@
         android:id="@+id/poster_grid_item_movie_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="@dimen/basic_margin"
         android:layout_gravity="center"
-        android:textSize="12sp"
+        android:textSize="@dimen/main_title"
         />
 
 </LinearLayout>

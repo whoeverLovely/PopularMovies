@@ -45,6 +45,7 @@ public class NetworkUtil {
         URL url = buildUrlWithAPIKey(urlStr);
         if (url != null) {
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(5000);
             try {
                 InputStream in = urlConnection.getInputStream();
 

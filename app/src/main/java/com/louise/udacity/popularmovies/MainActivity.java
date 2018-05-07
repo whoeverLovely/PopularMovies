@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         mRecyclerView.setAdapter(mAdapter);
 
         //execute the async task
-        new FetchMoviesTask(this, this).execute();
+        new FetchMoviesTask(this, this, this).execute();
 
     }
 
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         editor.putString(DefaultSharedPreferenceConstants.SORT_BY, parent.getItemAtPosition(position).toString());
         editor.apply();
-        new FetchMoviesTask(this, this).execute();
+        new FetchMoviesTask(this, this, this).execute();
     }
 
     @Override
