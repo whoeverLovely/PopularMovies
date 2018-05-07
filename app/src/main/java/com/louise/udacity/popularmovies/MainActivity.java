@@ -10,22 +10,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.Toast;
 
-import org.json.JSONException;
-
-import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements PostersAdapter.ItemClickListener,
-        AdapterView.OnItemSelectedListener {
+        AdapterView.OnItemSelectedListener, FetchMoviesTask.AsyncResponse{
     private final static String TAG = MainActivity.class.getSimpleName();
 
     PostersAdapter mAdapter;
@@ -64,8 +58,8 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         mAdapter = new PostersAdapter(this, this);
         mRecyclerView.setAdapter(mAdapter);
 
-        //Fetch data
-        new FetchMoview(this).execute();
+        //execute the async task
+        new FetchMoviesTask(this, this).execute();
 
     }
 
@@ -82,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         editor.putString(DefaultSharedPreferenceConstants.SORT_BY, parent.getItemAtPosition(position).toString());
         editor.apply();
-        new FetchMoview(this).execute();
+        new FetchMoviesTask(this, this).execute();
     }
 
     @Override
@@ -90,7 +84,14 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
 
     }
 
-    class FetchMoview extends AsyncTask<Void, Void, List<Movie>> {
+    @Override
+    public void processFinish(List<Movie> movieList) {
+        mMovieList = movieList;
+        mAdapter.swapData(movieList);
+        /*progressBar.setVisibility(View.INVISIBLE);*/
+    }
+
+    /*class FetchMoview extends AsyncTask<Void, Void, List<Movie>> {
         Context context;
 
         FetchMoview(Context context) {
@@ -133,5 +134,5 @@ public class MainActivity extends AppCompatActivity implements PostersAdapter.It
             mAdapter.swapData(movies);
             progressBar.setVisibility(View.INVISIBLE);
         }
-    }
+    }*/
 }
