@@ -1,7 +1,6 @@
 package com.louise.udacity.popularmovies;
 
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.NavUtils;
@@ -9,11 +8,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,9 +28,18 @@ import java.util.List;
 public class DetailActivity extends AppCompatActivity implements ItemClickListener{
 
     int id;
-    RecyclerView trailerList;
-    TrailerAdapter mAdapter;
-    List<String> trailerIdList;
+    RecyclerView mTrailerRecyclerList;
+    TrailerAdapter mTrailerAdapter;
+    List<Trailer> trailers;
+
+    RecyclerView mReviewRecyclerList;
+    ReviewAdapter mReviewAdapter;
+    List<Review> reviews;
+
+    TextView noTrailerTV;
+    TextView noReviewTV;
+    ProgressBar trailerPrograssBar;
+    ProgressBar reviewPrograssBar;
 
     private static final String TAG = DetailActivity.class.getSimpleName();
 
@@ -47,6 +54,10 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
         TextView voteTV = findViewById(R.id.textView_vote_average);
         TextView overviewTV = findViewById(R.id.textView_overview);
         ImageView posterImage = findViewById(R.id.imageView_poster);
+        noTrailerTV = findViewById(R.id.no_trailer_msg);
+        noReviewTV = findViewById(R.id.no_review_msg);
+        trailerPrograssBar = findViewById(R.id.trailer_process_indicator);
+        reviewPrograssBar = findViewById(R.id.review_process_indicator);
 
         Intent intent = getIntent();
         Movie movie = intent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
@@ -57,13 +68,21 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
         overviewTV.setText(movie.getOverview());
         Picasso.get().load(NetworkUtil.getFullImagePath(movie.getPosterPath())).into(posterImage);
 
-        // Display trailer recycler list
         id = movie.getId();
-        trailerList = findViewById(R.id.trailer_recyclerView);
-        trailerList.setLayoutManager(new LinearLayoutManager(this));
-        trailerList.setHasFixedSize(true);
-        mAdapter = new TrailerAdapter(this, this);
-        trailerList.setAdapter(mAdapter);
+
+        // Display trailer RecyclerView
+        mTrailerRecyclerList = findViewById(R.id.trailer_recyclerView);
+        mTrailerRecyclerList.setLayoutManager(new LinearLayoutManager(this));
+        mTrailerRecyclerList.setHasFixedSize(true);
+        mTrailerAdapter = new TrailerAdapter(this, this);
+        mTrailerRecyclerList.setAdapter(mTrailerAdapter);
+
+        // Display review RecyclerView
+        mReviewRecyclerList = findViewById(R.id.review_recyclerView);
+        mReviewRecyclerList.setLayoutManager(new LinearLayoutManager(this));
+        mReviewAdapter = new ReviewAdapter(this);
+        mReviewRecyclerList.setAdapter(mReviewAdapter);
+        mReviewRecyclerList.setNestedScrollingEnabled(false);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -74,8 +93,8 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
     protected void onResume() {
         super.onResume();
 
-        // Get trailer id
         getTrailers();
+        getReviews();
     }
 
     @Override
@@ -92,6 +111,8 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
 
     private void getTrailers() {
 
+        trailerPrograssBar.setVisibility(View.VISIBLE);
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(NetworkUtil.buildURL(NetworkUtil.VIDEOS, id),
                 null,
                 new Response.Listener<JSONObject>() {
@@ -99,13 +120,18 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
-                            final List<String> trailerIds = NetworkUtil.getTrailerIds(response);
-                            trailerIdList = trailerIds;
-                            mAdapter.swapData(trailerIds.size());
+                            trailers = NetworkUtil.getTrailers(response);
+                            mTrailerAdapter.swapData(trailers);
+                            if(trailers.size() == 0) {
+                                mTrailerRecyclerList.setVisibility(View.INVISIBLE);
+                                noTrailerTV.setVisibility(View.VISIBLE);
+                            }
 
                         } catch (JSONException e) {
                             Toast.makeText(DetailActivity.this, e.toString(), Toast.LENGTH_LONG).show();
                             e.printStackTrace();
+                        } finally {
+                            trailerPrograssBar.setVisibility(View.INVISIBLE);
                         }
                     }
                 },
@@ -115,6 +141,7 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
                     public void onErrorResponse(VolleyError error) {
                         Toast.makeText(DetailActivity.this, error.toString(), Toast.LENGTH_LONG).show();
                         error.printStackTrace();
+                        trailerPrograssBar.setVisibility(View.INVISIBLE);
                     }
                 });
 
@@ -135,6 +162,46 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
 
     @Override
     public void onItemClick(View view, int position) {
-        watchYoutubeVideo(trailerIdList.get(position));
+        watchYoutubeVideo(trailers.get(position).getTrailerKey());
+    }
+
+    private void getReviews() {
+
+        reviewPrograssBar.setVisibility(View.VISIBLE);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(NetworkUtil.buildURL(NetworkUtil.REVIEWS, id),
+                null,
+                new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            reviews = NetworkUtil.getReviews(response);
+                            mReviewAdapter.swapData(reviews);
+
+                            if(reviews.size() == 0) {
+                                mReviewRecyclerList.setVisibility(View.INVISIBLE);
+                                noReviewTV.setVisibility(View.VISIBLE);
+                            }
+
+                        } catch (JSONException e) {
+                            Toast.makeText(DetailActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+                            e.printStackTrace();
+                        } finally {
+                            reviewPrograssBar.setVisibility(View.INVISIBLE);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(DetailActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+                        error.printStackTrace();
+                        reviewPrograssBar.setVisibility(View.INVISIBLE);
+                    }
+                });
+
+        // Access the RequestQueue through your singleton class.
+        MySingletonVolley.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 }

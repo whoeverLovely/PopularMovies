@@ -9,18 +9,21 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import java.util.List;
+
 public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHolder>{
     Context mContext;
-    int mCount;
+    List<Trailer> trailerList;
     private ItemClickListener mClickListener;
+
 
     public TrailerAdapter(Context context, ItemClickListener clickListener) {
         mContext = context;
         mClickListener = clickListener;
     }
 
-    public void swapData(int count) {
-        mCount = count;
+    public void swapData(List<Trailer> trailerList) {
+        this.trailerList = trailerList;
         notifyDataSetChanged();
     }
 
@@ -33,25 +36,24 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        holder.trailerNo.setText(String.valueOf(position+1));
+        holder.trailerName.setText(trailerList.get(position).getTrailerName());
     }
 
     @Override
     public int getItemCount() {
-        return mCount;
+        if (trailerList == null)
+            return 0;
+        return trailerList.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
-
-        TextView trailer;
-        TextView trailerNo;
+        TextView trailerName;
         ImageButton play;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            trailer = itemView.findViewById(R.id.textView_trailer);
-            trailerNo = itemView.findViewById(R.id.textView_trailer_no);
+            trailerName = itemView.findViewById(R.id.textView_trailer_name);
             play = itemView.findViewById(R.id.imageButton_play_icon);
             play.setOnClickListener(this);
         }

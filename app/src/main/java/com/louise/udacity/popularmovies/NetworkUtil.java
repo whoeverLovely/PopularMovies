@@ -31,6 +31,7 @@ public class NetworkUtil {
     public final static String POPULAR = "popular";
     public final static String TOP_RATED = "top_rated";
     public final static String VIDEOS = "videos";
+    public final static String REVIEWS = "reviews";
 
     public static String buildURL(String APIType, int movieId) {
         Uri uri = Uri.parse(API_BASE_URL).buildUpon().appendQueryParameter("api_key", Keys.API_KEY).build();
@@ -43,6 +44,9 @@ public class NetworkUtil {
                 break;
             case VIDEOS:
                 uri = uri.buildUpon().appendPath(String.valueOf(movieId)).appendPath(VIDEOS).build();
+                break;
+            case REVIEWS:
+                uri = uri.buildUpon().appendPath(String.valueOf(movieId)).appendPath(REVIEWS).build();
                 break;
             default:
                 throw new RuntimeException("The API type doesn't exist.");
@@ -71,14 +75,37 @@ public class NetworkUtil {
         return movieList;
     }
 
-    public static List<String> getTrailerIds(JSONObject jsonObject) throws JSONException {
+    public static List<Trailer> getTrailers(JSONObject jsonObject) throws JSONException {
         JSONArray videoArray = jsonObject.getJSONArray("results");
-        List<String> trailerList = new LinkedList<>();
+        List<Trailer> trailerList = new LinkedList<Trailer>();
+        Trailer trailer;
         for (int i = 0; i < videoArray.length(); i++) {
-            if ("Trailer".equals(videoArray.getJSONObject(i).getString("type")))
-                trailerList.add(videoArray.getJSONObject(i).getString("key"));
+            if ("Trailer".equals(videoArray.getJSONObject(i).getString("type"))) {
+                trailer = new Trailer();
+                trailer.setTrailerKey(videoArray.getJSONObject(i).getString("key"));
+                trailer.setTrailerName(videoArray.getJSONObject(i).getString("name"));
+                trailerList.add(trailer);
+            }
         }
         return trailerList;
+    }
+
+    public static List<Review> getReviews(JSONObject jsonObject) throws JSONException {
+        JSONArray reviewArray = jsonObject.getJSONArray("results");
+        List<Review> reviewList = new LinkedList<Review>();
+
+        if(reviewArray != null && reviewArray.length()> 0) {
+            Review review;
+            for(int i = 0; i < reviewArray.length(); i++) {
+                review = new Review();
+                review.setReviewContent(reviewArray.getJSONObject(i).getString("content"));
+                review.setReviewerName(reviewArray.getJSONObject(i).getString("author"));
+                reviewList.add(review);
+            }
+
+        }
+
+        return reviewList;
     }
 
     public static String getFullImagePath(String path) {
