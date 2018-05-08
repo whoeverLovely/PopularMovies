@@ -1,15 +1,20 @@
 package com.louise.udacity.popularmovies;
 
 import android.content.ActivityNotFoundException;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -25,12 +30,14 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public class DetailActivity extends AppCompatActivity implements ItemClickListener{
+public class DetailActivity extends AppCompatActivity implements ItemClickListener {
 
     int id;
     RecyclerView mTrailerRecyclerList;
     TrailerAdapter mTrailerAdapter;
     List<Trailer> trailers;
+    static boolean isFavorite;
+    Movie movie;
 
     RecyclerView mReviewRecyclerList;
     ReviewAdapter mReviewAdapter;
@@ -40,6 +47,7 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
     TextView noReviewTV;
     ProgressBar trailerPrograssBar;
     ProgressBar reviewPrograssBar;
+    ImageButton favoriteButton;
 
     private static final String TAG = DetailActivity.class.getSimpleName();
 
@@ -58,9 +66,10 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
         noReviewTV = findViewById(R.id.no_review_msg);
         trailerPrograssBar = findViewById(R.id.trailer_process_indicator);
         reviewPrograssBar = findViewById(R.id.review_process_indicator);
+        favoriteButton = findViewById(R.id.imageButton_favorite);
 
         Intent intent = getIntent();
-        Movie movie = intent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
+        movie = intent.getParcelableExtra(MainActivity.EXTRA_MOVIE);
         titleTV.setText(movie.getTitle());
         originalTitleTV.setText(movie.getOriginalTitle());
         releaseDateTV.setText(movie.getReleaseDate());
@@ -84,17 +93,68 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
         mReviewRecyclerList.setAdapter(mReviewAdapter);
         mReviewRecyclerList.setNestedScrollingEnabled(false);
 
+        // Display correct imagebutton image
+        Cursor cursor = getContentResolver().query(ContentUris.withAppendedId(FavMovieContract.FavMovieEntry.CONTENT_URI, id),
+                null,
+                null,
+                null,
+                null);
+        if (cursor.moveToFirst()) {
+            isFavorite = true;
+            favoriteButton.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_on));
+        } else {
+            favoriteButton.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_off));
+        }
+
+        favoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (isFavorite) {
+                    Log.d(TAG, "fav cancelled");
+                    // Change ImageButton image
+                    favoriteButton.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_off));
+                    isFavorite = false;
+                    // Remove the movie from the favmovies table
+                    getContentResolver().delete(ContentUris.withAppendedId(FavMovieContract.FavMovieEntry.CONTENT_URI, id),
+                            null,
+                            null);
+                } else {
+                    Log.d(TAG, "fav added");
+                    // Change ImageButton image
+                    favoriteButton.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_on));
+                    isFavorite = true;
+                    // Add the movie to the favmovies table
+                    ContentValues cv = new ContentValues();
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_ORIGINAL_TITLE, movie.getOriginalTitle());
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_OVERVIEW, movie.getOverview());
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_POSTER_PATH, movie.getPosterPath());
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_RELEASE_DATE, movie.getReleaseDate());
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_TITLE, movie.getTitle());
+                    cv.put(FavMovieContract.FavMovieEntry.COLUMN_VOTE_AVERAGE, movie.getVoteAverage());
+                    cv.put(FavMovieContract.FavMovieEntry._ID, id);
+                    getContentResolver().insert(FavMovieContract.FavMovieEntry.CONTENT_URI, cv);
+
+                }
+
+
+            }
+        });
+
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
+        getTrailers();
+        getReviews();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
 
-        getTrailers();
-        getReviews();
+
     }
 
     @Override
@@ -112,7 +172,6 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
     private void getTrailers() {
 
         trailerPrograssBar.setVisibility(View.VISIBLE);
-
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(NetworkUtil.buildURL(NetworkUtil.VIDEOS, id),
                 null,
                 new Response.Listener<JSONObject>() {
@@ -122,7 +181,7 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
                         try {
                             trailers = NetworkUtil.getTrailers(response);
                             mTrailerAdapter.swapData(trailers);
-                            if(trailers.size() == 0) {
+                            if (trailers.size() == 0) {
                                 mTrailerRecyclerList.setVisibility(View.INVISIBLE);
                                 noTrailerTV.setVisibility(View.VISIBLE);
                             }
@@ -178,7 +237,7 @@ public class DetailActivity extends AppCompatActivity implements ItemClickListen
                             reviews = NetworkUtil.getReviews(response);
                             mReviewAdapter.swapData(reviews);
 
-                            if(reviews.size() == 0) {
+                            if (reviews.size() == 0) {
                                 mReviewRecyclerList.setVisibility(View.INVISIBLE);
                                 noReviewTV.setVisibility(View.VISIBLE);
                             }

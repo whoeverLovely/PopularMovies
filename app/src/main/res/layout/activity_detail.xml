@@ -57,6 +57,16 @@
         app:layout_constraintTop_toBottomOf="@+id/textView_release_date"
         tools:text="10.0" />
 
+    <ImageButton
+        android:id="@+id/imageButton_favorite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/btn_star_big_off"
+        app:layout_constraintStart_toStartOf="@id/textView_vote_average"
+        app:layout_constraintTop_toBottomOf="@+id/textView_vote_average"
+        android:background="@android:color/transparent"
+        android:padding="@dimen/basic_margin"/>
+
     <ImageView
         android:id="@+id/imageView_poster"
         android:layout_width="0dp"
@@ -129,9 +139,10 @@
         android:id="@+id/trailer_process_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_gravity="center_horizontal"
         app:layout_constraintTop_toBottomOf="@+id/trailer_divider"
-        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         android:visibility="invisible"/>
 
     <TextView
@@ -186,7 +197,8 @@
         android:id="@+id/review_process_indicator"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/review_divider"
         android:layout_marginTop="8dp"
         android:visibility="invisible"/>

@@ -10,6 +10,7 @@
     <string-array name="sort_by_array">
         <item>Most Popular</item>
         <item>Top Rated</item>
+        <item>My Favorite</item>
     </string-array>
 
 </resources>

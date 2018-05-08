@@ -2,11 +2,19 @@ package com.louise.udacity.popularmovies;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -21,16 +29,20 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements ItemClickListener,
-        AdapterView.OnItemSelectedListener{
+        AdapterView.OnItemSelectedListener, LoaderManager.LoaderCallbacks<Cursor> {
     private final static String TAG = MainActivity.class.getSimpleName();
 
     PostersAdapter mAdapter;
     RecyclerView mRecyclerView;
     List<Movie> mMovieList;
     ProgressBar progressBar;
+    boolean cursorLoaderStarted;
+
+    private static final int FAVMOVIE_LOADER_ID = 100;
 
     public static final String EXTRA_MOVIE = "movie";
 
@@ -64,7 +76,6 @@ public class MainActivity extends AppCompatActivity implements ItemClickListener
         mRecyclerView.setAdapter(mAdapter);
 
         fetchMovies();
-
     }
 
     @Override
@@ -80,7 +91,16 @@ public class MainActivity extends AppCompatActivity implements ItemClickListener
         SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(this).edit();
         editor.putString(DefaultSharedPreferenceConstants.SORT_BY, parent.getItemAtPosition(position).toString());
         editor.apply();
-        fetchMovies();
+
+        if (position == 2) {
+            if (!cursorLoaderStarted) {
+                getSupportLoaderManager().initLoader(FAVMOVIE_LOADER_ID, null, this);
+                cursorLoaderStarted = true;
+            } else
+                getSupportLoaderManager().restartLoader(FAVMOVIE_LOADER_ID, null, this);
+        } else
+            fetchMovies();
+
     }
 
     @Override
@@ -99,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements ItemClickListener
                         sortByDefault);
 
         String APIType = NetworkUtil.POPULAR;
-        if(sortBy.equals(sortByArr[1]))
+        if (sortBy.equals(sortByArr[1]))
             APIType = NetworkUtil.TOP_RATED;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(NetworkUtil.buildURL(APIType, 0),
@@ -111,10 +131,11 @@ public class MainActivity extends AppCompatActivity implements ItemClickListener
                         progressBar.setVisibility(View.INVISIBLE);
                         try {
                             mMovieList = NetworkUtil.getMovieList(response);
+                            mAdapter.swapData(mMovieList);
+                            Log.d(TAG, "fetch movie list size is " + mMovieList.size());
                         } catch (JSONException e) {
                             Toast.makeText(MainActivity.this, e.toString(), Toast.LENGTH_LONG).show();
                         }
-                        mAdapter.swapData(mMovieList);
                     }
                 },
                 new Response.ErrorListener() {
@@ -128,5 +149,45 @@ public class MainActivity extends AppCompatActivity implements ItemClickListener
 
         // Access the RequestQueue through your singleton class.
         MySingletonVolley.getInstance(this).addToRequestQueue(jsonObjectRequest);
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, @Nullable Bundle args) {
+        return new CursorLoader(this,
+                FavMovieContract.FavMovieEntry.CONTENT_URI,
+                null,
+                null,
+                null,
+                FavMovieContract.FavMovieEntry.COLUMN_TIMESTAMP);
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+
+        mMovieList = new ArrayList<>();
+        data.moveToFirst();
+        Movie movie;
+        while (!data.isAfterLast()) {
+            movie = new Movie();
+            movie.setTitle(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_TITLE)));
+            movie.setVoteAverage(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_VOTE_AVERAGE)));
+            movie.setReleaseDate(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_RELEASE_DATE)));
+            movie.setPosterPath(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_POSTER_PATH)));
+            movie.setOverview(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_OVERVIEW)));
+            movie.setOriginalTitle(data.getString(data.getColumnIndex(FavMovieContract.FavMovieEntry.COLUMN_ORIGINAL_TITLE)));
+            movie.setId(data.getInt(data.getColumnIndex(FavMovieContract.FavMovieEntry._ID)));
+            mMovieList.add(movie);
+            data.moveToNext();
+        }
+        if ("My Favorite".equals(PreferenceManager.getDefaultSharedPreferences(this)
+                .getString(DefaultSharedPreferenceConstants.SORT_BY, null))) {
+            mAdapter.swapData(mMovieList);
+        }
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
     }
 }
