@@ -1,6 +1,7 @@
 package com.louise.udacity.popularmovies;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -38,16 +39,18 @@ public class PostersAdapter extends RecyclerView.Adapter<PostersAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(@NonNull PostersAdapter.ViewHolder holder, int position) {
-        Movie movie = mMovieList.get(position);
-        Picasso.get().load(NetworkUtil.getFullImagePath(movie.getPosterPath())).into(holder.posterImageView);
-        holder.movieNameTextView.setText(movie.getTitle());
+
+            Movie movie = mMovieList.get(position);
+            Picasso.get().load(NetworkUtil.getFullImagePath(movie.getPosterPath())).into(holder.posterImageView);
+            holder.movieNameTextView.setText(movie.getTitle());
     }
 
     @Override
     public int getItemCount() {
-        if(mMovieList == null)
-            return 0;
-        return mMovieList.size();
+
+            if(mMovieList == null)
+                return 0;
+            return mMovieList.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -67,7 +70,4 @@ public class PostersAdapter extends RecyclerView.Adapter<PostersAdapter.ViewHold
         }
     }
 
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
-    }
 }
